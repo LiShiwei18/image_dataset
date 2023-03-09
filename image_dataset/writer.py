@@ -34,7 +34,7 @@ class ImageDatasetBuilder:
     def _init_next_block(self):
         self._block_index += 1
         self._inblock_index = 0
-        self._fp = open(os.path.join(self._path, "data_{}.bin".format(self._block_index)),'w')
+        self._fp = open(os.path.join(self._path, "data_{}.bin".format(self._block_index)),'wb')
         self._index = np.full((self._index.shape[0],), -1, dtype=np.int64)
 
     def close(self):
@@ -43,7 +43,9 @@ class ImageDatasetBuilder:
     def write(self, image : Image.Image, meta : Any):
         self._index[self._inblock_index] = self._fp.tell()
         self._inblock_index += 1
-        img_buf = io.BytesIO()                                                                            
+        img_buf = io.BytesIO()
+        if image.mode != "RGB":
+            image = image.convert("RGB")
         image.save(img_buf, format="JPEG", quality=100)
         data_val = img_buf.getvalue()
         meta_val = zstd.compress(json.dumps(meta, ensure_ascii=False).encode("utf-8"), level=10)
